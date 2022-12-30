@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"wunderbase/pkg/api"
 )
 
 func Run(ctx context.Context, wg *sync.WaitGroup, queryEnginePath, queryEnginePort, prismaSchemaFilePath string, production bool) {
@@ -24,6 +25,15 @@ func Run(ctx context.Context, wg *sync.WaitGroup, queryEnginePath, queryEnginePo
 		killExistingPrismaQueryEngineProcess(queryEnginePort)
 		args = append(args, "--enable-playground", "--port", queryEnginePort)
 	}
+
+	if api.AdditionalConfig.EnableRawQueries {
+		args = append(args, "--enable-raw-queries")
+	}
+
+	if api.AdditionalConfig.EnableQueryEngineLog {
+		args = append(args, "--log-queries")
+	}
+
 	cmd := exec.CommandContext(ctx, queryEnginePath, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

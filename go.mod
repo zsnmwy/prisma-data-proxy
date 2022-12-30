@@ -6,6 +6,8 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/caarlos0/env/v6 v6.10.0
 	github.com/gavv/httpexpect/v2 v2.3.1
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/stretchr/testify v1.8.0
 	github.com/wundergraph/graphql-go-tools v1.53.0
 	go.uber.org/ratelimit v0.2.0
 )
@@ -16,6 +18,7 @@ require (
 	github.com/andybalholm/brotli v1.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fatih/structs v1.0.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -24,7 +27,6 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect

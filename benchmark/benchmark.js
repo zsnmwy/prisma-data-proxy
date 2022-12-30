@@ -1,3 +1,10 @@
+/*
+  https://k6.io/docs/getting-started/installation/
+  https://k6.io/docs/getting-started/running-k6/
+
+  $ k6 run --vus 10 --duration 30s  benckmark.js
+*/
+
 import { check } from 'k6';
 import http from 'k6/http';
 
@@ -9,6 +16,7 @@ export default function () {
     const params = {
         headers: {
             'Content-Type': 'application/json',
+            authorization: 'Bearer SECRET_API_KEY',
         },
     };
 

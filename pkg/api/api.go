@@ -2,11 +2,13 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +19,24 @@ import (
 	"github.com/wundergraph/graphql-go-tools/pkg/asttransform"
 	"github.com/wundergraph/graphql-go-tools/pkg/introspection"
 	"go.uber.org/ratelimit"
+
+	"github.com/go-redis/redis/v8"
 )
+
+var AdditionalConfig struct {
+	ApiKey               string
+	EnableRawQueries     bool
+	EnableQueryEngineLog bool
+}
+
+var RedisConfig struct {
+	RedisEnable   bool
+	RedisAddress  string
+	RedisPassword string
+	RedisDB       int
+}
+
+var rdb *redis.Client
 
 type Handler struct {
 	enableSleepMode   bool
@@ -35,6 +54,15 @@ type Handler struct {
 }
 
 func NewHandler(enableSleepMode bool, production bool, queryEngineURL string, queryEngineSdlURL, healthEndpoint string, sleepAfterSeconds, readLimitSeconds, writeLimitSeconds int, cancel func()) *Handler {
+	if RedisConfig.RedisEnable {
+		fmt.Println("Redis Enabled")
+		rdb = redis.NewClient(&redis.Options{
+			Addr:     RedisConfig.RedisAddress,
+			Password: RedisConfig.RedisPassword,
+			DB:       RedisConfig.RedisDB,
+		})
+	}
+
 	return &Handler{
 		enableSleepMode:   enableSleepMode,
 		enablePlayground:  !production,
@@ -57,6 +85,18 @@ type IntrospectionResponse struct {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	apiKeyFromQueryString := r.URL.Query().Get("api_key")
+	if apiKeyFromQueryString == "" {
+		apiKeyFromQueryString = r.URL.Query().Get("_token")
+	}
+	apiKeyFromHeader := r.Header.Get("authorization")
+
+	if apiKeyFromQueryString != AdditionalConfig.ApiKey && apiKeyFromHeader != "Bearer "+AdditionalConfig.ApiKey {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	h.init.Do(func() {
 		if h.enableSleepMode {
 			go h.runSleepMode()
@@ -70,6 +110,55 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	})
+
+	if RedisConfig.RedisEnable && strings.HasPrefix(r.URL.Path, "/redis") {
+
+		var arr []interface{}
+
+		if r.Method == "POST" {
+			err := json.NewDecoder(r.Body).Decode(&arr)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		if r.Method == "GET" {
+			// /redis/set/key/value => ["SET", "key", "value"]
+			parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/redis/"), "/")
+			for _, part := range parts {
+				arr = append(arr, part)
+			}
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		result, err := rdb.Do(ctx, arr...).Result()
+
+		var jsonResult []byte
+		if err != nil {
+			if err.Error() == "redis: nil" {
+				jsonResult, _ = json.Marshal(map[string]interface{}{
+					"result": nil,
+				})
+				w.WriteHeader(http.StatusOK)
+			} else {
+				jsonResult, _ = json.Marshal(map[string]interface{}{
+					"error": err.Error(),
+				})
+				w.WriteHeader(http.StatusBadRequest)
+			}
+		} else {
+			jsonResult, _ = json.Marshal(map[string]interface{}{
+				"result": result,
+			})
+			w.WriteHeader(http.StatusOK)
+		}
+
+		_, _ = w.Write(jsonResult)
+		return
+	}
 
 	if r.URL.Path == h.healthEndpoint {
 		// explicitly do this before the sleep mode check
