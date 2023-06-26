@@ -1,6 +1,6 @@
 FROM golang:1.19.0-alpine as builder
 
-ENV PRISMA_VERSION="efdf9b1183dddfd4258cd181a72125755215ab7b"
+ENV PRISMA_VERSION="4bc8b6e1b66cb932731fb1bdbbc550d1e010de81"
 ENV OS="linux-musl"
 ENV QUERY_ENGINE_URL="https://binaries.prisma.sh/all_commits/${PRISMA_VERSION}/${OS}/query-engine.gz"
 ENV MIGRATION_ENGINE_URL="https://binaries.prisma.sh/all_commits/${PRISMA_VERSION}/${OS}/migration-engine.gz"
@@ -29,6 +29,7 @@ COPY --from=builder /app/prisma/query-engine /app/query-engine
 COPY ./schema.prisma .
 RUN chmod +x /app/migration-engine
 RUN chmod +x /app/query-engine
+RUN apk add openssl1.1-compat postgresql-client bash openssl libgcc libstdc++ ncurses-libs lsof curl --no-cache
 ENV MIGRATION_LOCK_FILE="/app/migration.lock"
 ENV QUERY_ENGINE_PATH="/app/query-engine"
 ENV MIGRATION_ENGINE_PATH="/app/migration-engine"

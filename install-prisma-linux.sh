@@ -1,5 +1,5 @@
 # define variable
-PRISMA_VERSION="efdf9b1183dddfd4258cd181a72125755215ab7b"
+PRISMA_VERSION="4bc8b6e1b66cb932731fb1bdbbc550d1e010de81"
 OS="linux-musl"
 QUERY_ENGINE_URL="https://binaries.prisma.sh/all_commits/${PRISMA_VERSION}/${OS}/query-engine.gz"
 MIGRATION_ENGINE_URL="https://binaries.prisma.sh/all_commits/${PRISMA_VERSION}/${OS}/migration-engine.gz"
