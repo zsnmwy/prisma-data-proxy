@@ -7,3 +7,5 @@ fly.toml
 migration-engine
 query-engine
 node_modules
+ssl-certs
+wunderbase

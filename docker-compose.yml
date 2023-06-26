@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=pass
+
+  graphql:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+      - https-portal4466
+    ports:
+      - "4466:4466"
+      - "4467:4467"
+    environment:
+      PRISMA_SCHEMA_FILE: ./schema.prisma
+      DATABASE_URL: postgresql://postgres:pass@db:5432/postgres?schema=public
+      DIRECT_URL: postgresql://postgres:pass@db:5432/postgres?schema=public
+      API_KEY: custometoken
+      LISTEN_ADDR: "0.0.0.0:4466"
+      ENABLE_MIGRATION: "true"
+      ENABLE_SLEEP_MODE: "false"
+      QUERY_ENGINE_LOG: "true"
+      QUERY_ENGINE_HOST_BIND: "0.0.0.0"
+      ENABLE_OPEN_TELEMETRY: "true"
+      OPEN_TELEMETRY_ENDPOINT: ""
+      ENABLE_TELEMETRY_IN_RESPONSE: "true"
+      PRODUCTION: "false"
+
+  https-portal4466:
+    image: steveltn/https-portal:1
+    ports:
+      - "443:443"
+    environment:
+      STAGE: local
+      DOMAINS: 'https-portal4466 -> http://graphql:4466'
+    volumes:
+      - ./ssl-certs:/var/lib/https-portal
+
+  test:
+    image: node:18.3.0-bullseye-slim
+    working_dir: /app
+    entrypoint: /app/entrypoint.sh
+    command: tail -f /dev/null
+    environment:
+      DATABASE_URL: prisma://https-portal4466/?api_key=custometoken
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      DIRECT_URL: postgresql://postgres:pass@db:5432/postgres?schema=public
+    volumes:
+      - ./:/app:cached
+      - node_modules_test:/app/node_modules
+
+volumes:
+  node_modules:
+  node_modules_test:

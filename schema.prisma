@@ -1,6 +1,11 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./data/db.sqlite?pool_timeout=5"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 model Post {
@@ -8,6 +13,7 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   title     String
+  attr      Json
   content   String?
   published Boolean  @default(false)
   author    User     @relation(fields: [authorId], references: [id])
