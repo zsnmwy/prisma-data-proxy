@@ -75,12 +75,23 @@ func killExistingPrismaQueryEngineProcess(queryEnginePort string) {
 		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %s).OwningProcess -Force", queryEnginePort)
 		_, err = execCmd(exec.Command("Stop-Process", "-Id", command))
 	} else {
-		command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", queryEnginePort)
+
+		isExistProcessCommand := fmt.Sprintf("lsof -i tcp:%s", queryEnginePort)
 		var data []byte
-		data, err = execCmd(exec.Command("sh", "-c", command))
+
+		data, err = execCmd(exec.Command("sh", "-c", isExistProcessCommand))
 		if err == nil && len(data) > 0 {
-			_, err = execCmd(exec.Command("kill", "-9", strings.TrimSpace(string(data))))
+			log.Printf("Found Prisma Query Engine is running on Port %s, Kill It", queryEnginePort)
+			command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", queryEnginePort)
+			data, err = execCmd(exec.Command("sh", "-c", command))
+			if err == nil && len(data) > 0 {
+				_, err = execCmd(exec.Command("kill", "-9", strings.TrimSpace(string(data))))
+			}
+		} else {
+			log.Printf("Prisma Query Engine is not running on Port %s", queryEnginePort)
+			return
 		}
+
 	}
 	if err != nil {
 		var waitStatus syscall.WaitStatus
