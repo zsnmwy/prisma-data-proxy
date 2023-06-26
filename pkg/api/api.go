@@ -27,6 +27,11 @@ var AdditionalConfig struct {
 	ApiKey               string
 	EnableRawQueries     bool
 	EnableQueryEngineLog bool
+	EnableMetrics bool
+	QueryEngineHostBind string
+	EnableOpenTelemetry bool
+	OpenTelemetryEndpoint string
+	EnableTelemetryInResponse bool
 }
 
 var RedisConfig struct {

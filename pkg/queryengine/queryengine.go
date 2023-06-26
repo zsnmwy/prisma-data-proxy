@@ -21,6 +21,9 @@ func Run(ctx context.Context, wg *sync.WaitGroup, queryEnginePath, queryEnginePo
 	// so we must kill the existing engine process before we start new onw.
 
 	args := []string{"--datamodel-path", prismaSchemaFilePath}
+	
+	args = append(args, "--host", api.AdditionalConfig.QueryEngineHostBind)
+
 	if !production {
 		killExistingPrismaQueryEngineProcess(queryEnginePort)
 		args = append(args, "--enable-playground", "--port", queryEnginePort)
@@ -32,6 +35,21 @@ func Run(ctx context.Context, wg *sync.WaitGroup, queryEnginePath, queryEnginePo
 
 	if api.AdditionalConfig.EnableQueryEngineLog {
 		args = append(args, "--log-queries")
+	}
+
+	if api.AdditionalConfig.EnableMetrics {
+		args = append(args, "--enable-metrics", "--dataproxy-metric-override")
+	}
+
+	if api.AdditionalConfig.EnableOpenTelemetry {
+		args = append(args, "--enable-open-telemetry")
+		if api.AdditionalConfig.OpenTelemetryEndpoint != "" {
+			args = append(args, "--open-telemetry-endpoint", api.AdditionalConfig.OpenTelemetryEndpoint)
+		}
+	}
+
+	if api.AdditionalConfig.EnableTelemetryInResponse {
+		args = append(args, "--enable-telemetry-in-response")
 	}
 
 	cmd := exec.CommandContext(ctx, queryEnginePath, args...)

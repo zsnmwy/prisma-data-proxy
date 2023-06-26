@@ -17,27 +17,42 @@ import (
 )
 
 type config struct {
-	Production            bool   `env:"PRODUCTION" envDefault:"false"`
+	// Data Proxy Wrapper
+	ApiKey            string `env:"API_KEY" envDefault:"SECRET_API_KEY"`
+	Production        bool   `env:"PRODUCTION" envDefault:"false"`
+	EnableSleepMode   bool   `env:"ENABLE_SLEEP_MODE" envDefault:"false"`
+	SleepAfterSeconds int    `env:"SLEEP_AFTER_SECONDS" envDefault:"10"`
+	ListenAddr        string `env:"LISTEN_ADDR" envDefault:"0.0.0.0:4466"`
+	GraphiQLApiURL    string `env:"GRAPHIQL_API_URL" envDefault:"http://localhost:4466"`
+	ReadLimitSeconds  int    `env:"READ_LIMIT_SECONDS" envDefault:"10000"`
+	WriteLimitSeconds int    `env:"WRITE_LIMIT_SECONDS" envDefault:"2000"`
+	HealthEndpoint    string `env:"HEALTH_ENDPOINT" envDefault:"/health"`
+
+	// Prisma
+	PrismaVersion string `env:"PRISMA_VERSION" envDefault:"4bc8b6e1b66cb932731fb1bdbbc550d1e010de81"` // 4.4.0-29 @ https://github.com/prisma/engines-wrapper/blob/main/packages/engines-version/package.json
+
+	// Prisma Migration Engine - Schema
 	PrismaSchemaFilePath  string `env:"PRISMA_SCHEMA_FILE" envDefault:"./schema.prisma"`
+	EnableMigration       bool   `env:"ENABLE_MIGRATION" envDefault:"false"`
 	MigrationLockFilePath string `env:"MIGRATION_LOCK_FILE" envDefault:"migration.lock"`
-	EnableSleepMode       bool   `env:"ENABLE_SLEEP_MODE" envDefault:"true"`
-	SleepAfterSeconds     int    `env:"SLEEP_AFTER_SECONDS" envDefault:"10"`
+	MigrationEnginePath   string `env:"MIGRATION_ENGINE_PATH" envDefault:"./migration-engine"`
+
 	// I think that we should discard `EnablePlayground`, when we add `Production` flag.
 	// EnablePlayground      bool   `env:"ENABLE_PLAYGROUND" envDefault:"true"`
-	MigrationEnginePath string `env:"MIGRATION_ENGINE_PATH" envDefault:"./migration-engine"`
+
+	// Prisma Query Engine - Instance
 	QueryEnginePath     string `env:"QUERY_ENGINE_PATH" envDefault:"./query-engine"`
 	QueryEnginePort     string `env:"QUERY_ENGINE_PORT" envDefault:"4467"`
-	ListenAddr          string `env:"LISTEN_ADDR" envDefault:"0.0.0.0:4466"`
-	GraphiQLApiURL      string `env:"GRAPHIQL_API_URL" envDefault:"http://localhost:4466"`
-	ReadLimitSeconds    int    `env:"READ_LIMIT_SECONDS" envDefault:"10000"`
-	WriteLimitSeconds   int    `env:"WRITE_LIMIT_SECONDS" envDefault:"2000"`
-	HealthEndpoint      string `env:"HEALTH_ENDPOINT" envDefault:"/health"`
-	EnableMigration     bool   `env:"ENABLE_MIGRATION" envDefault:"false"`
+	QueryEngineHostBind string `env:"QUERY_ENGINE_HOST_BIND" envDefault:"127.0.0.1"`
 	QueryEngineLog      bool   `env:"QUERY_ENGINE_LOG" envDefault:"false"`
 	EnableRawQueries    bool   `env:"QUERY_ENGINE_RAW_QUERIES" envDefault:"true"`
-	PrismaVersion       string `env:"PRISMA_VERSION" envDefault:"fb56bfedb3a66723ec5d908bc5cb4a411ec97c47"` // 4.4.0-29 @ https://github.com/prisma/engines-wrapper/blob/main/packages/engines-version/package.json
-	ApiKey              string `env:"API_KEY" envDefault:"SECRET_API_KEY"`
+	// Prisma Query Engine - Trace && Metrics
+	EnableMetrics         bool `env:"ENABLE_METRICS" envDefault:"true"`
+	EnableOpenTelemetry   bool `env:"ENABLE_OPEN_TELEMETRY" envDefault:"false"`
+	OpenTelemetryEndpoint bool `env:"OPEN_TELEMETRY_ENDPOINT" envDefault:""`
+	EnableTelemetryInResponse bool `env:"ENABLE_TELEMETRY_IN_RESPONSE" envDefault:"false"`
 
+	// Redis Config
 	RedisRestAPIEnable bool   `env:"REDIS_REST_API_ENABLE" envDefault:"false"`
 	RedisAddress       string `env:"REDIS_ADDRESS" envDefault:"localhost:6379"`
 	RedisPassword      string `env:"REDIS_PASSWORD" envDefault:""`
@@ -56,6 +71,9 @@ func main() {
 	api.AdditionalConfig.ApiKey = config.ApiKey
 	api.AdditionalConfig.EnableRawQueries = config.EnableRawQueries
 	api.AdditionalConfig.EnableQueryEngineLog = config.QueryEngineLog
+	api.AdditionalConfig.EnableMetrics = config.EnableMetrics
+	api.AdditionalConfig.QueryEngineHostBind = config.QueryEngineHostBind
+	api.AdditionalConfig.EnableTelemetryInResponse = config.EnableTelemetryInResponse
 	api.RedisConfig.RedisEnable = config.RedisRestAPIEnable
 	api.RedisConfig.RedisAddress = config.RedisAddress
 	api.RedisConfig.RedisPassword = config.RedisPassword
