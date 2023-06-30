@@ -49,7 +49,7 @@ type config struct {
 	// Prisma Query Engine - Trace && Metrics
 	EnableMetrics         bool `env:"ENABLE_METRICS" envDefault:"true"`
 	EnableOpenTelemetry   bool `env:"ENABLE_OPEN_TELEMETRY" envDefault:"false"`
-	OpenTelemetryEndpoint bool `env:"OPEN_TELEMETRY_ENDPOINT" envDefault:""`
+	OpenTelemetryEndpoint string `env:"OPEN_TELEMETRY_ENDPOINT" envDefault:""`
 	EnableTelemetryInResponse bool `env:"ENABLE_TELEMETRY_IN_RESPONSE" envDefault:"false"`
 
 	// Redis Config
@@ -74,6 +74,8 @@ func main() {
 	api.AdditionalConfig.EnableMetrics = config.EnableMetrics
 	api.AdditionalConfig.QueryEngineHostBind = config.QueryEngineHostBind
 	api.AdditionalConfig.EnableTelemetryInResponse = config.EnableTelemetryInResponse
+	api.AdditionalConfig.OpenTelemetryEndpoint = config.OpenTelemetryEndpoint
+	api.AdditionalConfig.EnableOpenTelemetry = config.EnableOpenTelemetry
 	api.RedisConfig.RedisEnable = config.RedisRestAPIEnable
 	api.RedisConfig.RedisAddress = config.RedisAddress
 	api.RedisConfig.RedisPassword = config.RedisPassword
