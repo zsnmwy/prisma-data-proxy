@@ -185,7 +185,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	if h.enablePlayground && r.Header.Get("Content-Type") != "application/json" {
+	if h.enablePlayground && r.Header.Get("Content-Type") != "application/json" && !strings.Contains(r.UserAgent(), "Deno"){
 		w.Header().Add("Content-Type", "text/html")
 		html := graphiql.GetGraphiqlPlaygroundHTML(r.RequestURI)
 		_, _ = w.Write([]byte(html))
