@@ -12,7 +12,46 @@ other implementations:
 - https://github.com/OnurGvnc/prisma-data-proxy-fastify
 - https://github.com/aiji42/prisma-data-proxy-alt
 
-## setup
+## TLDR
+
+Most of the time you don't need to care about this repo.
+
+Please to see [the guide repo](https://github.com/zsnmwy/prisma-data-proxy-windmill-template).
+
+It can works with Prisma `4.x.x-5.x.x`. **But you must make the query engine to match Prisma version**.
+
+The guide repo is already resolve this question.
+
+It will check Prisma Version and download the correct version when build the docker image.
+
+**Please don't use the Migration Engine in this repo.**
+
+**Best practics ref the guide repo.**
+
+## About Prisma Query Engine Version
+
+```bash
+yarn prisma version
+```
+
+```log
+root@6b4ebdef442f:/app# yarn prisma version
+yarn run v1.22.19
+$ /app/node_modules/.bin/prisma version
+prisma                  : 5.0.0
+@prisma/client          : 5.0.0
+Current platform        : debian-openssl-1.1.x
+Query Engine (Node-API) : libquery-engine 6b0aef69b7cdfc787f822ecd7cdc76d5f1991584 (at node_modules/@prisma/engines/libquery_engine-debian-openssl-1.1.x.so.node)
+Schema Engine           : schema-engine-cli 6b0aef69b7cdfc787f822ecd7cdc76d5f1991584 (at node_modules/@prisma/engines/schema-engine-debian-openssl-1.1.x)
+Schema Wasm             : @prisma/prisma-schema-wasm 4.17.0-26.6b0aef69b7cdfc787f822ecd7cdc76d5f1991584
+Default Engines Hash    : 6b0aef69b7cdfc787f822ecd7cdc76d5f1991584
+Studio                  : 0.487.0
+Done in 1.30s.
+```
+
+The Query Engine version is `6b0aef69b7cdfc787f822ecd7cdc76d5f1991584`.
+
+## setup (Deprecated)
 
 - clone this repository
 - update `schema.prisma`
@@ -57,6 +96,60 @@ Access http://${QueryEnginePort}/metrics
 | REDIS_PASSWORD | string |  | Redis的密码 |
 | REDIS_DB | int | 0 | Redis的数据库编号 |
 
+
+## Prisma 5.0 jsonProtocol
+
+If you want to use data proxy with `Prisma 5.0`, just only upgrade the query engine to match the version `yarn prisma version`.
+
+### Client Request To Query Engine
+
+> Code src/index.tsx
+
+POST /5.0.0/0c851fb4212291ec29bc4fbc42b1fbb7a42875e19c540ee0e7aae40496d7e23e/graphql HTTP/1.0
+
+```json
+{
+  "modelName": "User",
+  "action": "createOne",
+  "query": {
+    "arguments": {
+      "data": {
+        "email": "2023-07-29T05:51:33.569Z123@email.com",
+        "posts": {
+          "create": {
+            "title": "posts",
+            "attr": {
+              "a": 123,
+              "b": true,
+              "c": {
+                "d": 22,
+                "e": "123"
+              }
+            }
+          }
+        }
+      }
+    },
+    "selection": {
+      "$composites": true,
+      "$scalars": true
+    }
+  }
+}
+```
+
+### Response
+```json
+{
+  "data": {
+    "createOneUser": {
+      "id": 1,
+      "email": "2023-07-29T05:51:33.569Z123@email.com",
+      "name": null
+    }
+  }
+}
+```
 
 ## 🧪 Experimental Redis Rest API.
 

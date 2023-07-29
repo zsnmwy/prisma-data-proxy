@@ -7,14 +7,28 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=pass
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  tcpdump:
+    image: nicolaka/netshoot
+    depends_on:
+      - graphql
+    command: tcpdump -i eth0 -w /data/graphql.pcap
+    network_mode: service:graphql
+    volumes:
+      - $PWD/data:/data
 
   graphql:
     build:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - db
-      - https-portal4466
+      db:
+          condition: service_healthy
     ports:
       - "4466:4466"
       - "4467:4467"
@@ -24,7 +38,6 @@ services:
       DIRECT_URL: postgresql://postgres:pass@db:5432/postgres?schema=public
       API_KEY: custometoken
       LISTEN_ADDR: "0.0.0.0:4466"
-      ENABLE_MIGRATION: "true"
       ENABLE_SLEEP_MODE: "false"
       QUERY_ENGINE_LOG: "true"
       QUERY_ENGINE_HOST_BIND: "0.0.0.0"
@@ -34,6 +47,9 @@ services:
       PRODUCTION: "false"
 
   https-portal4466:
+    depends_on:
+      graphql:
+        condition: service_healthy
     image: steveltn/https-portal:1
     ports:
       - "443:443"

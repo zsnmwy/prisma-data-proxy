@@ -1,9 +1,8 @@
 FROM golang:1.19.0-alpine as builder
 
-ENV PRISMA_VERSION="4bc8b6e1b66cb932731fb1bdbbc550d1e010de81"
+ENV PRISMA_VERSION="6b0aef69b7cdfc787f822ecd7cdc76d5f1991584"
 ENV OS="linux-musl"
 ENV QUERY_ENGINE_URL="https://binaries.prisma.sh/all_commits/${PRISMA_VERSION}/${OS}/query-engine.gz"
-ENV MIGRATION_ENGINE_URL="https://binaries.prisma.sh/all_commits/${PRISMA_VERSION}/${OS}/migration-engine.gz"
 
 # install prisma
 WORKDIR /app/prisma
@@ -11,10 +10,6 @@ WORKDIR /app/prisma
 RUN wget -O query-engine.gz $QUERY_ENGINE_URL
 RUN gunzip query-engine.gz
 RUN chmod +x query-engine
-# download migration engine
-RUN wget -O migration-engine.gz $MIGRATION_ENGINE_URL
-RUN gunzip migration-engine.gz
-RUN chmod +x migration-engine
 
 # build app
 WORKDIR /app
@@ -24,15 +19,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o main .
 FROM alpine
 WORKDIR /app
 COPY --from=builder /app/main .
-COPY --from=builder /app/prisma/migration-engine /app/migration-engine
 COPY --from=builder /app/prisma/query-engine /app/query-engine
 COPY ./schema.prisma .
-RUN chmod +x /app/migration-engine
 RUN chmod +x /app/query-engine
 RUN apk add openssl1.1-compat postgresql-client bash openssl libgcc libstdc++ ncurses-libs lsof curl --no-cache
-ENV MIGRATION_LOCK_FILE="/app/migration.lock"
 ENV QUERY_ENGINE_PATH="/app/query-engine"
-ENV MIGRATION_ENGINE_PATH="/app/migration-engine"
 ENV PRISMA_SCHEMA_FILE="/app/schema.prisma"
 RUN mkdir /app/data
 EXPOSE 4466
